@@ -30,59 +30,59 @@ async function run() {
         const usersCollation = client.db('MusicDB').collection('users')
         const classesCollation = client.db('MusicDB').collection('classes')
         const selectedClassesCollation = client.db('MusicDB').collection('selectedClasses')
-        
+
         app.post('/jwt', (req, res) => {
             const user = req.body;
             const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '1h' })
-            res.send({token})
-          })
+            res.send({ token })
+        })
 
         // class related api
-        app.get('/classes',async(req,res)=>{
+        app.get('/classes', async (req, res) => {
             const result = await classesCollation.find().toArray();
             res.send(result)
         })
 
         // instructor class related api
-        app.post('/classes',async(req,res)=>{
+        app.post('/classes', async (req, res) => {
             const data = req.body;
             const result = await classesCollation.insertOne(data)
             res.send(result)
         })
 
-        app.get('/my-classes/:email',async(req,res)=>{
+        app.get('/my-classes/:email', async (req, res) => {
             const email = req.params.email;
             console.log(email);
-            const query = {InstructorEmail:email};
+            const query = { InstructorEmail: email };
             const result = await classesCollation.find(query).toArray();
             res.send(result)
         })
-        
+
 
         // student related api
 
-        app.post('/selected-class',async (req,res)=>{
+        app.post('/selected-class', async (req, res) => {
             const data = req.body;
             const result = await selectedClassesCollation.insertOne(data);
             res.send(result)
         })
 
-        app.get('/selected-class/:email',async(req,res)=>{
+        app.get('/selected-class/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {studentEmail:email};
+            const query = { studentEmail: email };
             const result = await selectedClassesCollation.find(query).toArray();
             res.send(result)
         })
 
-        app.delete('/selected-class/:id',async(req,res)=>{
+        app.delete('/selected-class/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id:new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await selectedClassesCollation.deleteOne(query);
             res.send(result)
         })
 
         // user related api
-        app.get('/user',async(req,res)=>{
+        app.get('/user', async (req, res) => {
             const result = await usersCollation.find().toArray();
             res.send(result)
         })
@@ -100,8 +100,29 @@ async function run() {
 
         // admin related api
 
-        
-        
+        app.patch('/make-instructor/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: 'instructor'
+                },
+            };
+            const result = await usersCollation.updateOne(filter,updateDoc);
+            res.send(result)
+        })
+        app.patch('/make-admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: 'admin'
+                },
+            };
+            const result = await usersCollation.updateOne(filter,updateDoc);
+            res.send(result)
+        })
+
 
 
         await client.db("admin").command({ ping: 1 });
