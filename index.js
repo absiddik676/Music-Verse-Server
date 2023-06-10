@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
 const app = express()
@@ -43,16 +43,41 @@ async function run() {
             res.send(result)
         })
 
+        // instructor class related api
+        app.post('/classes',async(req,res)=>{
+            const data = req.body;
+            const result = await classesCollation.insertOne(data)
+            res.send(result)
+        })
+
+        app.get('/my-classes/:email',async(req,res)=>{
+            const email = req.params.email;
+            console.log(email);
+            const query = {InstructorEmail:email};
+            const result = await classesCollation.find(query).toArray();
+            res.send(result)
+        })
+        
+
+        // student related api
+
         app.post('/selected-class',async (req,res)=>{
             const data = req.body;
             const result = await selectedClassesCollation.insertOne(data);
             res.send(result)
         })
 
-        app.get('/classes/:email',async(req,res)=>{
+        app.get('/selected-class/:email',async(req,res)=>{
             const email = req.params.email;
             const query = {studentEmail:email};
             const result = await selectedClassesCollation.find(query).toArray();
+            res.send(result)
+        })
+
+        app.delete('/selected-class/:id',async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id:new ObjectId(id)};
+            const result = await selectedClassesCollation.deleteOne(query);
             res.send(result)
         })
 
