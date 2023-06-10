@@ -82,6 +82,11 @@ async function run() {
         })
 
         // user related api
+        app.get('/user',async(req,res)=>{
+            const result = await usersCollation.find().toArray();
+            res.send(result)
+        })
+
         app.post('/user', async (req, res) => {
             const user = req.body;
             const query = { email: user.email };
@@ -92,6 +97,11 @@ async function run() {
             const result = await usersCollation.insertOne(user);
             res.send(result)
         })
+
+        // admin related api
+
+        
+        
 
 
         await client.db("admin").command({ ping: 1 });
