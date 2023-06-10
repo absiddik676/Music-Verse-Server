@@ -58,6 +58,16 @@ async function run() {
             res.send(result)
         })
 
+        
+        app.get('/user/instructor/:email',async(req,res)=>{
+            const email = req.params.email;
+            const query = {email:email};
+            const user = await usersCollation.findOne(query);
+            const result = {instructor:user?.role === 'instructor'}
+            console.log(result);
+            res.send(result)
+        })
+
 
         // student related api
 
@@ -78,6 +88,14 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await selectedClassesCollation.deleteOne(query);
+            res.send(result)
+        })
+
+        app.get('/user/student/:email',async(req,res)=>{
+            const email = req.params.email;
+            const query = {email:email};
+            const user = await usersCollation.findOne(query);
+            const result = {student:user?.role === 'student'}
             res.send(result)
         })
 
