@@ -111,6 +111,15 @@ async function run() {
             const result = await usersCollation.updateOne(filter,updateDoc);
             res.send(result)
         })
+
+        app.get('/user/admin/:email',async(req,res)=>{
+            const email = req.params.email;
+            const query = {email:email};
+            const user = await usersCollation.findOne(query);
+            const result = {admin:user?.role === 'admin'}
+            res.send(result)
+        })
+        
         app.patch('/make-admin/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
