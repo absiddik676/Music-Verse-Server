@@ -1,13 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const jwt = require('jsonwebtoken');
 require("dotenv").config();
 const app = express()
 const port = process.env.PORT || 5000;
 
 app.use(cors())
 app.use(express.json())
-
 
 
 
@@ -29,10 +29,30 @@ async function run() {
 
         const usersCollation = client.db('MusicDB').collection('users')
         const classesCollation = client.db('MusicDB').collection('classes')
+        const selectedClassesCollation = client.db('MusicDB').collection('selectedClasses')
+        
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '1h' })
+            res.send({token})
+          })
 
         // class related api
         app.get('/classes',async(req,res)=>{
             const result = await classesCollation.find().toArray();
+            res.send(result)
+        })
+
+        app.post('/selected-class',async (req,res)=>{
+            const data = req.body;
+            const result = await selectedClassesCollation.insertOne(data);
+            res.send(result)
+        })
+
+        app.get('/classes/:email',async(req,res)=>{
+            const email = req.params.email;
+            const query = {studentEmail:email};
+            const result = await selectedClassesCollation.find(query).toArray();
             res.send(result)
         })
 
