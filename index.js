@@ -155,6 +155,29 @@ async function run() {
             res.send(result)
         })
 
+        app.patch('/approve-class/:id',async(req,res)=>{
+            const id  = req.params.id;
+            const filter = {_id: new ObjectId(id)};
+            const updateDoc ={
+                $set:{
+                    status:'approve'
+                }
+            };
+            const result = await classesCollation.updateOne(filter,updateDoc);
+            res.send({result,message:'Class approved'})
+        })
+        app.patch('/deny-class/:id',async(req,res)=>{
+            const id  = req.params.id;
+            const filter = {_id: new ObjectId(id)};
+            const updateDoc ={
+                $set:{
+                    status:'deny'
+                }
+            };
+            const result = await classesCollation.updateOne(filter,updateDoc);
+            res.send({result,message:'Class deny'})
+        })
+
 
 
         await client.db("admin").command({ ping: 1 });
