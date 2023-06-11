@@ -42,6 +42,11 @@ async function run() {
             const result = await classesCollation.find().toArray();
             res.send(result)
         })
+        app.get('/approve-classes', async (req, res) => {
+            const query = {status:'approve'}
+            const result = await classesCollation.find(query).toArray();
+            res.send(result)
+        })
 
         // instructor class related api
         app.post('/classes', async (req, res) => {
