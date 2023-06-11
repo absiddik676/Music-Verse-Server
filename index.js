@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const stripe = require("stripe")(process.env.PAYMENT_SECRET);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
@@ -69,7 +70,6 @@ async function run() {
             const query = {email:email};
             const user = await usersCollation.findOne(query);
             const result = {instructor:user?.role === 'instructor'}
-            console.log(result);
             res.send(result)
         })
 
@@ -89,6 +89,14 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/payment-class/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) };
+            const result = await selectedClassesCollation.findOne(query);
+            res.send(result)
+        })
+
         app.delete('/selected-class/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -102,6 +110,19 @@ async function run() {
             const user = await usersCollation.findOne(query);
             const result = {student:user?.role === 'student'}
             res.send(result)
+        })
+        // payment related api
+        app.post('/create-payment-intent',async(req,res)=>{
+            const {price} = req.body;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types:['card']
+              });
+              res.send({
+                clientSecret: paymentIntent.client_secret,
+              });
         })
 
         // user related api
@@ -166,16 +187,16 @@ async function run() {
             const result = await classesCollation.updateOne(filter,updateDoc);
             res.send({result,message:'Class approved'})
         })
-        app.patch('/deny-class/:id',async(req,res)=>{
+        app.patch('/denied-class/:id',async(req,res)=>{
             const id  = req.params.id;
             const filter = {_id: new ObjectId(id)};
             const updateDoc ={
                 $set:{
-                    status:'deny'
+                    status:'denied'
                 }
             };
             const result = await classesCollation.updateOne(filter,updateDoc);
-            res.send({result,message:'Class deny'})
+            res.send({result,message:'Class denied'})
         })
 
 
