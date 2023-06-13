@@ -80,6 +80,25 @@ async function run() {
             res.send(result)
         })
 
+        app.patch('/enrolled-student-count/:id',async(req,res)=>{
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) };
+            const classDetails = await classesCollation.findOne(query);
+            const availableSites = classDetails.AvailableSeats;
+           
+            if (availableSites > 0) {
+                 const newAvailableSites = availableSites-1
+                 const updateDoc = {
+                    $set: {
+                        AvailableSeats: newAvailableSites
+                    },
+                  };
+                  const result = await classesCollation.updateOne(query,updateDoc)
+                  res.send(result)
+            }
+        })
+
 
         // student related api
 
