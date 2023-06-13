@@ -51,6 +51,11 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/bes-classes',async(req,res)=>{
+            const result = await classesCollation.find().sort({ enrolledStudentNumber: -1 }).limit(6).toArray();
+            res.send(result)
+        })
+
         // instructor class related api
         app.post('/classes', async (req, res) => {
             const data = req.body;
@@ -74,28 +79,56 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/all-instructor',async(req,res)=>{
-            const  query = {role:'instructor'};
-            const  result = await usersCollation.find(query).toArray();
+        app.get('/all-instructor', async (req, res) => {
+            const query = { role: 'instructor' };
+            const result = await usersCollation.find(query).toArray();
             res.send(result)
         })
 
-        app.patch('/enrolled-student-count/:id',async(req,res)=>{
+        app.patch('/available-student-count/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id);
             const query = { _id: new ObjectId(id) };
             const classDetails = await classesCollation.findOne(query);
             const availableSites = classDetails.AvailableSeats;
-           
+
             if (availableSites > 0) {
-                 const newAvailableSites = availableSites-1
-                 const updateDoc = {
+                const newAvailableSites = availableSites - 1
+                const updateDoc = {
                     $set: {
                         AvailableSeats: newAvailableSites
                     },
-                  };
-                  const result = await classesCollation.updateOne(query,updateDoc)
-                  res.send(result)
+                };
+                const result = await classesCollation.updateOne(query, updateDoc)
+                res.send(result)
+            }
+        })
+
+
+
+        app.put('/enrolled-student-count/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const classDetails = await classesCollation.findOne(query);
+            if (classDetails.enrolledStudentNumber) {
+                const totalStudent = classDetails.enrolledStudentNumber + 1;
+                const updateDoc = {
+                    $set: {
+                        enrolledStudentNumber: totalStudent
+                    },
+                };
+                const result = await classesCollation.updateOne(query, updateDoc)
+                res.send(result)
+            }
+            else {
+                const options = { upsert: true };
+                const updateDoc = {
+                    $set: {
+                        enrolledStudentNumber: parseInt(1)
+                    },
+                };
+
+                const result = await classesCollation.updateOne(query, updateDoc, options)
+                res.send(result)
             }
         })
 
@@ -150,9 +183,9 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/enrolled-data/:email',async(req,res)=>{
+        app.get('/enrolled-data/:email', async (req, res) => {
             const email = req.params.email;
-            const  query = {studentEmail:email}
+            const query = { studentEmail: email }
             const result = await enrolledCollation.find(query).toArray();
             res.send(result)
         })
