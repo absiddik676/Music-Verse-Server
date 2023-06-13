@@ -32,6 +32,7 @@ async function run() {
         const classesCollation = client.db('MusicDB').collection('classes')
         const selectedClassesCollation = client.db('MusicDB').collection('selectedClasses')
         const paymentHistoryCollation = client.db('MusicDB').collection('paymentHistory')
+        const enrolledCollation = client.db('MusicDB').collection('enrolledClasses')
 
         app.post('/jwt', (req, res) => {
             const user = req.body;
@@ -59,7 +60,6 @@ async function run() {
 
         app.get('/my-classes/:email', async (req, res) => {
             const email = req.params.email;
-            console.log(email);
             const query = { InstructorEmail: email };
             const result = await classesCollation.find(query).toArray();
             res.send(result)
@@ -71,6 +71,12 @@ async function run() {
             const query = { email: email };
             const user = await usersCollation.findOne(query);
             const result = { instructor: user?.role === 'instructor' }
+            res.send(result)
+        })
+
+        app.get('/all-instructor',async(req,res)=>{
+            const  query = {role:'instructor'};
+            const  result = await usersCollation.find(query).toArray();
             res.send(result)
         })
 
@@ -92,7 +98,6 @@ async function run() {
 
         app.get('/payment-class/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id);
             const query = { _id: new ObjectId(id) };
             const result = await selectedClassesCollation.findOne(query);
             res.send(result)
@@ -115,19 +120,28 @@ async function run() {
 
         app.get('/payment-history/:email', async (req, res) => {
             const email = req.params.email;
-            console.log(email);
             const query = { email: email };
             const result = await paymentHistoryCollation.find(query).toArray();
             res.send(result)
         })
 
-        
+        app.post('/enrolled-data', async (req, res) => {
+            const data = req.body;
+            const result = await enrolledCollation.insertOne(data);
+            res.send(result)
+        })
+
+        app.get('/enrolled-data/:email',async(req,res)=>{
+            const email = req.params.email;
+            const  query = {studentEmail:email}
+            const result = await enrolledCollation.find(query).toArray();
+            res.send(result)
+        })
 
         // payment related api
         app.post('/create-payment-intent', async (req, res) => {
             const { price } = req.body;
             const amount = price * 100;
-            console.log(price, amount);
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: "usd",
@@ -140,7 +154,6 @@ async function run() {
 
         app.post('/payment-history', async (req, res) => {
             const data = req.body;
-            console.log(data);
             const result = await paymentHistoryCollation.insertOne(data);
             res.send(result)
         })
