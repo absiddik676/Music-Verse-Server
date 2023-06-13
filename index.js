@@ -1,9 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-const stripe = require("stripe")(process.env.PAYMENT_SECRET);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
+const stripe = require("stripe")(process.env.PAYMENT_SECRET);
 const app = express()
 const port = process.env.PORT || 5000;
 
@@ -31,6 +31,7 @@ async function run() {
         const usersCollation = client.db('MusicDB').collection('users')
         const classesCollation = client.db('MusicDB').collection('classes')
         const selectedClassesCollation = client.db('MusicDB').collection('selectedClasses')
+        const paymentHistoryCollation = client.db('MusicDB').collection('paymentHistory')
 
         app.post('/jwt', (req, res) => {
             const user = req.body;
@@ -44,7 +45,7 @@ async function run() {
             res.send(result)
         })
         app.get('/approve-classes', async (req, res) => {
-            const query = {status:'approve'}
+            const query = { status: 'approve' }
             const result = await classesCollation.find(query).toArray();
             res.send(result)
         })
@@ -64,12 +65,12 @@ async function run() {
             res.send(result)
         })
 
-        
-        app.get('/user/instructor/:email',async(req,res)=>{
+
+        app.get('/user/instructor/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email:email};
+            const query = { email: email };
             const user = await usersCollation.findOne(query);
-            const result = {instructor:user?.role === 'instructor'}
+            const result = { instructor: user?.role === 'instructor' }
             res.send(result)
         })
 
@@ -104,25 +105,44 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/user/student/:email',async(req,res)=>{
+        app.get('/user/student/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email:email};
+            const query = { email: email };
             const user = await usersCollation.findOne(query);
-            const result = {student:user?.role === 'student'}
+            const result = { student: user?.role === 'student' }
             res.send(result)
         })
+
+        app.get('/payment-history/:email', async (req, res) => {
+            const email = req.params.email;
+            console.log(email);
+            const query = { email: email };
+            const result = await paymentHistoryCollation.find(query).toArray();
+            res.send(result)
+        })
+
+        
+
         // payment related api
-        app.post('/create-payment-intent',async(req,res)=>{
-            const {price} = req.body;
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body;
             const amount = price * 100;
+            console.log(price, amount);
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: "usd",
-                payment_method_types:['card']
-              });
-              res.send({
+                payment_method_types: ['card']
+            });
+            res.send({
                 clientSecret: paymentIntent.client_secret,
-              });
+            });
+        })
+
+        app.post('/payment-history', async (req, res) => {
+            const data = req.body;
+            console.log(data);
+            const result = await paymentHistoryCollation.insertOne(data);
+            res.send(result)
         })
 
         // user related api
@@ -152,18 +172,18 @@ async function run() {
                     role: 'instructor'
                 },
             };
-            const result = await usersCollation.updateOne(filter,updateDoc);
+            const result = await usersCollation.updateOne(filter, updateDoc);
             res.send(result)
         })
 
-        app.get('/user/admin/:email',async(req,res)=>{
+        app.get('/user/admin/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email:email};
+            const query = { email: email };
             const user = await usersCollation.findOne(query);
-            const result = {admin:user?.role === 'admin'}
+            const result = { admin: user?.role === 'admin' }
             res.send(result)
         })
-        
+
         app.patch('/make-admin/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
@@ -172,31 +192,31 @@ async function run() {
                     role: 'admin'
                 },
             };
-            const result = await usersCollation.updateOne(filter,updateDoc);
+            const result = await usersCollation.updateOne(filter, updateDoc);
             res.send(result)
         })
 
-        app.patch('/approve-class/:id',async(req,res)=>{
-            const id  = req.params.id;
-            const filter = {_id: new ObjectId(id)};
-            const updateDoc ={
-                $set:{
-                    status:'approve'
+        app.patch('/approve-class/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    status: 'approve'
                 }
             };
-            const result = await classesCollation.updateOne(filter,updateDoc);
-            res.send({result,message:'Class approved'})
+            const result = await classesCollation.updateOne(filter, updateDoc);
+            res.send({ result, message: 'Class approved' })
         })
-        app.patch('/denied-class/:id',async(req,res)=>{
-            const id  = req.params.id;
-            const filter = {_id: new ObjectId(id)};
-            const updateDoc ={
-                $set:{
-                    status:'denied'
+        app.patch('/denied-class/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    status: 'denied'
                 }
             };
-            const result = await classesCollation.updateOne(filter,updateDoc);
-            res.send({result,message:'Class denied'})
+            const result = await classesCollation.updateOne(filter, updateDoc);
+            res.send({ result, message: 'Class denied' })
         })
 
 
