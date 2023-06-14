@@ -193,7 +193,7 @@ async function run() {
         app.get('/payment-history/:email',verifyJWT, async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
-            const result = await paymentHistoryCollation.find(query).toArray();
+            const result = await paymentHistoryCollation.find(query).sort({date:-1}).toArray();
             res.send(result)
         })
 
